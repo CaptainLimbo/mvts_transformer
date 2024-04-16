@@ -90,7 +90,7 @@ The configurations as shown below will evaluate the model on the TEST set period
 
 Besides the console output  and the logfile `output.log`, you can monitor the evolution of performance (after installing tensorboard: `pip install tensorboard`) with:
 ```bash
-tensorboard dev upload --name my_exp --logdir path/to/output_dir
+tensorboard dev upload --name my_exp --logdir path/to/output/_dir
 ```
 
 ## Train models from scratch
@@ -135,3 +135,22 @@ python src/main.py --output_dir experiments --comment "finetune for regression" 
 ```bash
 python src/main.py --output_dir experiments --comment "finetune for classification" --name SpokenArabicDigits_finetuned --records_file Classification_records.xls --data_dir /path/to/Datasets/Classification/SpokenArabicDigits/ --data_class tsra --pattern TRAIN --val_pattern TEST --epochs 100 --lr 0.001 --optimizer RAdam --batch_size 128 --pos_encoding learnable --d_model 64 --load_model path/to/SpokenArabicDigits_pretrained/checkpoints/model_best.pth --task classification --change_output --key_metric accuracy
 ```
+
+python src/main.py --output_dir experiments --comment "classification from Scratch" --name $sudoku_fromScratch --records_file Classification_records.xls --data_class ar --data_dir datasets/ET_TS_Split --pattern TRAIN --val_pattern VAL --test_pattern TEST  --epochs 10 --lr 0.001 --optimizer RAdam  --pos_encoding learnable  --task classification  --key_metric accuracy
+
+python src/main.py --output_dir experiments --comment "classification from Scratch" --name $sudoku_fromScratch --records_file Classification_records.xls --data_class ar --data_dir datasets/ET_TS --val_ratio 0.1 --test_ratio 0.1  --epochs 10 --lr 0.001 --optimizer RAdam  --pos_encoding learnable  --task classification  --key_metric accuracy
+
+python src/main.py --output_dir experiments --comment "classification from Scratch" --name $distraction_fromScratch --records_file Classification_records.xls --data_class ar --data_dir datasets/Distraction/adhd --val_ratio 0.1 --test_ratio 0.1  --epochs 20 --lr 0.5e-4 --optimizer RAdam  --pos_encoding learnable  --task classification  --key_metric accuracy --distraction_task adhd --distraction_used_phase before_removal --distraction_window_size 150 --distraction_step_size 30
+
+python src/main.py --output_dir experiments --comment "classification from Scratch" --name $distraction_fromScratch --records_file Classification_records.xls --data_class ar --data_dir datasets/Distraction/trial --val_ratio 0.1 --test_ratio 0.1  --epochs 50 --lr 5e-4 --optimizer RAdam  --pos_encoding learnable  --task classification  --key_metric accuracy --distraction_task trial --distraction_used_phase before_removal --distraction_window_size 90 --distraction_step_size 30 
+
+
+python src/main.py --output_dir experiments --comment "classification from Scratch" --name distance_fromScratch --records_file Classification_records.xls --data_class ar --data_dir datasets/Distraction/distance --pattern train --val_pattern val --test_pattern test --epochs 50 --lr 5e-4 --optimizer RAdam  --pos_encoding learnable  --task classification  --key_metric accuracy --distraction_task distance --distraction_used_phases '[4,5]' --distraction_used_trials '[1,2,3,4,5,6]' --distraction_window_size 90 --distraction_step_size 30 --distraction_split by_user
+
+python src/main.py --output_dir experiments --comment "classification from Scratch" --name distance_fromScratch --records_file Classification_records.xls --data_class ar --data_dir datasets/Distraction/distance --val_ratio 0.1 --test_ratio 0.1 --epochs 50 --lr 5e-4 --optimizer RAdam  --pos_encoding learnable  --task classification  --key_metric accuracy --distraction_task distance --distraction_used_phases '[4,5]' --distraction_used_trials '[1,2,3,4,5,6]' --distraction_window_size 90 --distraction_step_size 30 --distraction_split by_sample
+
+python src/main.py --output_dir experiments --comment "classification from Scratch" --name distance_fromScratch --records_file Classification_records.xls --data_class ar --data_dir datasets/Distraction/distance --pattern train --val_pattern val --test_pattern test --epochs 100 --lr 5e-4 --optimizer RAdam  --pos_encoding learnable  --task classification  --key_metric accuracy --distraction_task distance --distraction_used_phases '[4,5]' --distraction_used_trials '[2,3,4,5]' --distraction_window_size 90 --distraction_step_size 30 --distraction_split by_time
+
+python src/main.py --output_dir experiments --comment "classification from Scratch" --name distance_fromScratch --records_file Classification_records.xls --data_class ar --data_dir datasets/Distraction/distance --pattern train --val_pattern val --epochs 2 --lr 5e-4 --optimizer RAdam  --pos_encoding learnable  --task classification  --key_metric accuracy --distraction_task distance --distraction_used_phases '[4,5]' --distraction_used_trials '[2,3,4,5]' --distraction_window_size 90 --distraction_step_size 30 --distraction_split by_time
+
+python src/main.py --output_dir experiments --comment "classification from Scratch" --name distance_fromScratch --records_file Classification_records.xls --data_class ar --data_dir datasets/Distraction/distance --val_ratio 0.2 --epochs 2 --lr 5e-4 --optimizer RAdam  --pos_encoding learnable  --task classification  --key_metric accuracy --distraction_task distance --distraction_used_phases '[4,5]' --distraction_used_trials '[1,2,3,4,5,6]' --distraction_window_size 90 --distraction_step_size 90 --distraction_split by_sample

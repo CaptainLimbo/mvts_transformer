@@ -5,7 +5,7 @@ pandas
 xlutils
 tabulate
 xlwt
-torch
+
 tensorboard
 matplotlib
 numpy

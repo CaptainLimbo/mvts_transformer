@@ -4,17 +4,18 @@ from torch.nn import functional as F
 
 
 def get_loss_module(config):
-
-    task = config['task']
+    task = config["task"]
 
     if (task == "imputation") or (task == "transduction"):
-        return MaskedMSELoss(reduction='none')  # outputs loss for each batch element
+        return MaskedMSELoss(reduction="none")  # outputs loss for each batch element
 
     if task == "classification":
-        return NoFussCrossEntropyLoss(reduction='none')  # outputs loss for each batch sample
+        return NoFussCrossEntropyLoss(
+            reduction="none"
+        )  # outputs loss for each batch sample
 
     if task == "regression":
-        return nn.MSELoss(reduction='none')  # outputs loss for each batch sample
+        return nn.MSELoss(reduction="none")  # outputs loss for each batch sample
 
     else:
         raise ValueError("Loss module for task '{}' does not exist".format(task))
@@ -24,7 +25,7 @@ def l2_reg_loss(model):
     """Returns the squared L2 norm of output layer of given model"""
 
     for name, param in model.named_parameters():
-        if name == 'output_layer.weight':
+        if name == "output_layer.weight":
             return torch.sum(torch.square(param))
 
 
@@ -35,23 +36,28 @@ class NoFussCrossEntropyLoss(nn.CrossEntropyLoss):
     """
 
     def forward(self, inp, target):
-        return F.cross_entropy(inp, target.long().squeeze(), weight=self.weight,
-                               ignore_index=self.ignore_index, reduction=self.reduction)
+        # print(inp.shape, target.shape, target.squeeze().shape)
+        return F.cross_entropy(
+            inp,
+            target,
+            weight=self.weight,
+            ignore_index=self.ignore_index,
+            reduction=self.reduction,
+        )
 
 
 class MaskedMSELoss(nn.Module):
-    """ Masked MSE Loss
-    """
+    """Masked MSE Loss"""
 
-    def __init__(self, reduction: str = 'mean'):
-
+    def __init__(self, reduction: str = "mean"):
         super().__init__()
 
         self.reduction = reduction
         self.mse_loss = nn.MSELoss(reduction=self.reduction)
 
-    def forward(self,
-                y_pred: torch.Tensor, y_true: torch.Tensor, mask: torch.BoolTensor) -> torch.Tensor:
+    def forward(
+        self, y_pred: torch.Tensor, y_true: torch.Tensor, mask: torch.BoolTensor
+    ) -> torch.Tensor:
         """Compute the loss between a target value and a prediction.
 
         Args:

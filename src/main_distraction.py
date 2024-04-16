@@ -32,6 +32,7 @@ from running import setup, pipeline_factory, validate, check_progress, NEG_METRI
 from utils import utils
 from datasets.data import data_factory, Normalizer
 from datasets.datasplit import split_dataset
+from datasets.distraction_preprocessing import convert_raw_data
 from models.ts_transformer import model_factory
 from models.loss import get_loss_module
 from optimizers import get_optimizer
@@ -41,6 +42,20 @@ import numpy as np
 def main(config):
     total_epoch_time = 0
     total_eval_time = 0
+    no_test = config["test_ratio"] == 0 and config["test_pattern"] is None
+    convert_raw_data(
+        "datasets/raw/Distraction Study Cleaned",
+        "datasets/Distraction",
+        label=config["distraction_task"],
+        use_phase=config["distraction_used_phases"],
+        use_trial=config["distraction_used_trials"],
+        window_size=config["distraction_window_size"],
+        step_size=config["distraction_step_size"],
+        split_strategy=config["distraction_split"],
+        no_test=no_test,
+        smooth_targets=config["smooth_targets"],
+        split_json_path=f"datasets/Distraction_Cleaned/{'split_val_only' if no_test else 'split'}.json",
+    )
 
     total_start_time = time.time()
     # Add file logging besides stdout
@@ -437,18 +452,57 @@ def main(config):
         )
     )
     logger.info("All Done!")
-    # test_label_dist = np.bincount(
-    #     val_data.labels_df.idxmax(axis=1).values.flatten().astype(int)
-    # )
-    # aggr_metrics_test = best_metrics
 
-    # with open(
-    #     f"output_epoch100_lr5e-4_{'fullval' if no_test else 'test'}{'_TargetSmoothed' if config['smooth_targets'] else ''}_cleaned.txt",
-    #     "a",
-    # ) as f:
-    #     f.write(
-    #         f"Setup: Split: {config['distraction_split']}; Task: {config['distraction_task']}; Used_phases: {config['distraction_used_phases']}; Used_trials: {config['distraction_used_trials']}; Window_size: {config['distraction_window_size']}; Step_size: {config['distraction_step_size']}; Seed: {config['seed']}; Test Label Distribution: {test_label_dist}; Epoch: {best_metrics['epoch']}. Result: Accuracy: {aggr_metrics_test['accuracy']:.4f}; Precision: {aggr_metrics_test['precision']:.4f}.\n"
-    #     )
+    if not no_test:
+        test_labels = test_data.labels_df
+        # labels_df is one-hot. We need to convert it to a single column
+        test_labels = test_labels.idxmax(axis=1).values.flatten().astype(int)
+        test_label_dist = np.bincount(test_labels)
+
+        test_dataset = dataset_class(test_data, test_indices)
+        model = utils.load_model(
+            model, os.path.join(config["save_dir"], f"model_best.pth")
+        )
+        model.Training = False
+        model.eval()
+
+        test_loader = DataLoader(
+            dataset=test_dataset,
+            batch_size=config["batch_size"],
+            shuffle=False,
+            num_workers=config["num_workers"],
+            pin_memory=True,
+            collate_fn=lambda x: collate_fn(x, max_len=model.max_len),
+        )
+        test_evaluator = runner_class(
+            model,
+            test_loader,
+            device,
+            loss_module,
+            print_interval=config["print_interval"],
+            console=config["console"],
+        )
+        aggr_metrics_test, per_batch_test = test_evaluator.evaluate(keep_all=True)
+        print_str = "Test Summary: "
+        for k, v in aggr_metrics_test.items():
+            if k == "epoch":
+                print_str += f"epoch: {best_metrics['epoch']} | "
+            else:
+                print_str += "{}: {:8f} | ".format(k, v)
+        logger.info(print_str)
+    else:
+        test_label_dist = np.bincount(
+            val_data.labels_df.idxmax(axis=1).values.flatten().astype(int)
+        )
+        aggr_metrics_test = best_metrics
+
+    with open(
+        f"output_epoch100_lr5e-4_{'fullval' if no_test else 'test'}{'_TargetSmoothed' if config['smooth_targets'] else ''}_cleaned.txt",
+        "a",
+    ) as f:
+        f.write(
+            f"Setup: Split: {config['distraction_split']}; Task: {config['distraction_task']}; Used_phases: {config['distraction_used_phases']}; Used_trials: {config['distraction_used_trials']}; Window_size: {config['distraction_window_size']}; Step_size: {config['distraction_step_size']}; Seed: {config['seed']}; Test Label Distribution: {test_label_dist}; Epoch: {best_metrics['epoch']}. Result: Accuracy: {aggr_metrics_test['accuracy']:.4f}; Precision: {aggr_metrics_test['precision']:.4f}.\n"
+        )
 
     total_runtime = time.time() - total_start_time
     logger.info(

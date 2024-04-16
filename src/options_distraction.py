@@ -372,6 +372,47 @@ class Options(object):
             default="BatchNorm",
             help="Normalization layer to be used internally in transformer encoder",
         )
+        self.parser.add_argument(
+            "--distraction_task",
+            choices={"distance", "phase", "adhd", "trial"},
+            default="distance",
+            help="Distraction task",
+        )
+        self.parser.add_argument(
+            "--distraction_split",
+            choices={"by_user", "by_sample", "by_time"},
+            default="by_user",
+            help="Split strategy for the distraction task",
+        )
+        self.parser.add_argument(
+            "--distraction_used_phases",
+            type=ast.literal_eval,
+            default=[4, 5],
+        )
+        self.parser.add_argument(
+            "--distraction_window_size",
+            type=int,
+            default=150,
+            help="Distraction window size",
+        )
+        self.parser.add_argument(
+            "--distraction_step_size",
+            type=int,
+            default=60,
+            help="Distraction step size",
+        )
+
+        self.parser.add_argument(
+            "--distraction_used_trials",
+            type=ast.literal_eval,
+            default=[1, 2, 3, 4, 5, 6],
+        )
+
+        self.parser.add_argument(
+            "--smooth_targets",
+            action="store_true",
+            help="whether to smooth the targets of gaze",
+        )
 
     def parse(self):
         args = self.parser.parse_args()

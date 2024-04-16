@@ -30,3 +30,11 @@ _build
 logs
 
 .idea
+
+*.csv
+*.json
+*.logs
+*.xls
+experiments/
+*.txt
+*.md

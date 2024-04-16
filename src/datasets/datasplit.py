@@ -2,9 +2,16 @@ import numpy as np
 from sklearn import model_selection
 
 
-def split_dataset(data_indices, validation_method, n_splits, validation_ratio, test_set_ratio=0,
-                  test_indices=None,
-                  random_seed=1337, labels=None):
+def split_dataset(
+    data_indices,
+    validation_method,
+    n_splits,
+    validation_ratio,
+    test_set_ratio=0,
+    test_indices=None,
+    random_seed=1337,
+    labels=None,
+):
     """
     Splits dataset (i.e. the global datasets indices) into a test set and a training/validation set.
     The training/validation set is used to produce `n_splits` different configurations/splits of indices.
@@ -20,14 +27,20 @@ def split_dataset(data_indices, validation_method, n_splits, validation_ratio, t
 
     # Set aside test set, if explicitly defined
     if test_indices is not None:
-        data_indices = np.array([ind for ind in data_indices if ind not in set(test_indices)])  # to keep initial order
+        data_indices = np.array(
+            [ind for ind in data_indices if ind not in set(test_indices)]
+        )  # to keep initial order
 
-    datasplitter = DataSplitter.factory(validation_method, data_indices, labels)  # DataSplitter object
+    datasplitter = DataSplitter.factory(
+        validation_method, data_indices, labels
+    )  # DataSplitter object
 
     # Set aside a random partition of all data as a test set
     if test_indices is None:
         if test_set_ratio:  # only if test set not explicitly defined
-            datasplitter.split_testset(test_ratio=test_set_ratio, random_state=random_seed)
+            datasplitter.split_testset(
+                test_ratio=test_set_ratio, random_state=random_seed
+            )
             test_indices = datasplitter.test_indices
         else:
             test_indices = []
@@ -45,12 +58,15 @@ class DataSplitter(object):
 
         self.data_indices = data_indices  # global datasets indices
         self.data_labels = data_labels  # global raw datasets labels
-        self.train_val_indices = np.copy(self.data_indices)  # global non-test indices (training and validation)
+        self.train_val_indices = np.copy(
+            self.data_indices
+        )  # global non-test indices (training and validation)
         self.test_indices = []  # global test indices
 
         if data_labels is not None:
             self.train_val_labels = np.copy(
-                self.data_labels)  # global non-test labels (includes training and validation)
+                self.data_labels
+            )  # global non-test labels (includes training and validation)
             self.test_labels = []  # global test labels # TODO: maybe not needed
 
     @staticmethod
@@ -103,12 +119,23 @@ class StratifiedShuffleSplitter(DataSplitter):
             test_labels: numpy array containing the labels corresponding to the test set
         """
 
-        splitter = model_selection.StratifiedShuffleSplit(n_splits=1, test_size=test_ratio, random_state=random_state)
+        splitter = model_selection.StratifiedShuffleSplit(
+            n_splits=1, test_size=test_ratio, random_state=random_state
+        )
         # get local indices, i.e. indices in [0, len(data_labels))
-        train_val_indices, test_indices = next(splitter.split(X=np.zeros(len(self.data_indices)), y=self.data_labels))
+        print(self.data_labels)
+        train_val_indices, test_indices = next(
+            splitter.split(X=np.zeros(len(self.data_indices)), y=self.data_labels)
+        )
         # return global datasets indices and labels
-        self.train_val_indices, self.train_val_labels = self.data_indices[train_val_indices], self.data_labels[train_val_indices]
-        self.test_indices, self.test_labels = self.data_indices[test_indices], self.data_labels[test_indices]
+        self.train_val_indices, self.train_val_labels = (
+            self.data_indices[train_val_indices],
+            self.data_labels[train_val_indices],
+        )
+        self.test_indices, self.test_labels = (
+            self.data_indices[test_indices],
+            self.data_labels[test_indices],
+        )
 
         return
 
@@ -125,13 +152,22 @@ class StratifiedShuffleSplitter(DataSplitter):
                 each array containing the global datasets indices corresponding to a fold's validation set
         """
 
-        splitter = model_selection.StratifiedShuffleSplit(n_splits=n_splits, test_size=validation_ratio,
-                                                          random_state=random_state)
+        splitter = model_selection.StratifiedShuffleSplit(
+            n_splits=n_splits, test_size=validation_ratio, random_state=random_state
+        )
         # get local indices, i.e. indices in [0, len(train_val_labels)), per fold
-        train_indices, val_indices = zip(*splitter.split(X=np.zeros(len(self.train_val_labels)), y=self.train_val_labels))
+        train_indices, val_indices = zip(
+            *splitter.split(
+                X=np.zeros(len(self.train_val_labels)), y=self.train_val_labels
+            )
+        )
         # return global datasets indices per fold
-        self.train_indices = [self.train_val_indices[fold_indices] for fold_indices in train_indices]
-        self.val_indices = [self.train_val_indices[fold_indices] for fold_indices in val_indices]
+        self.train_indices = [
+            self.train_val_indices[fold_indices] for fold_indices in train_indices
+        ]
+        self.val_indices = [
+            self.train_val_indices[fold_indices] for fold_indices in val_indices
+        ]
 
         return
 
@@ -153,9 +189,13 @@ class ShuffleSplitter(DataSplitter):
             test_labels: numpy array containing the labels corresponding to the test set
         """
 
-        splitter = model_selection.ShuffleSplit(n_splits=1, test_size=test_ratio, random_state=random_state)
+        splitter = model_selection.ShuffleSplit(
+            n_splits=1, test_size=test_ratio, random_state=random_state
+        )
         # get local indices, i.e. indices in [0, len(data_indices))
-        train_val_indices, test_indices = next(splitter.split(X=np.zeros(len(self.data_indices))))
+        train_val_indices, test_indices = next(
+            splitter.split(X=np.zeros(len(self.data_indices)))
+        )
         # return global datasets indices and labels
         self.train_val_indices = self.data_indices[train_val_indices]
         self.test_indices = self.data_indices[test_indices]
@@ -178,12 +218,19 @@ class ShuffleSplitter(DataSplitter):
                 each array containing the global datasets indices corresponding to a fold's validation set
         """
 
-        splitter = model_selection.ShuffleSplit(n_splits=n_splits, test_size=validation_ratio,
-                                                random_state=random_state)
+        splitter = model_selection.ShuffleSplit(
+            n_splits=n_splits, test_size=validation_ratio, random_state=random_state
+        )
         # get local indices, i.e. indices in [0, len(train_val_labels)), per fold
-        train_indices, val_indices = zip(*splitter.split(X=np.zeros(len(self.train_val_indices))))
+        train_indices, val_indices = zip(
+            *splitter.split(X=np.zeros(len(self.train_val_indices)))
+        )
         # return global datasets indices per fold
-        self.train_indices = [self.train_val_indices[fold_indices] for fold_indices in train_indices]
-        self.val_indices = [self.train_val_indices[fold_indices] for fold_indices in val_indices]
+        self.train_indices = [
+            self.train_val_indices[fold_indices] for fold_indices in train_indices
+        ]
+        self.val_indices = [
+            self.train_val_indices[fold_indices] for fold_indices in val_indices
+        ]
 
         return
